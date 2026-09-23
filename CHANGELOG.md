@@ -21,6 +21,12 @@ verbatim as the GitHub Release notes — so what you write here is what ships.
 
 ### Fixed
 
+- Emails whose HTML closes an empty document and puts the whole newsletter
+  after `</html>` (e.g. Sendy/GrapesJS campaigns) no longer render as an empty
+  entry. Mail clients move that trailing content into `<body>` as HTML5
+  requires, but linkedom does not, so the entry page, the admin preview and the
+  RSS, Atom and JSON feeds showed only `<meta charset="UTF-8">`. The closing
+  `</body>`/`</html>` tags are now dropped before parsing.
 - Per-feed favicons now resolve for senders on a subdomain that hosts no icon of
   its own (e.g. `mail.example.com`): the lookup walks up to the apex domain
   (`example.com`) and uses its favicon, caching it under the original sender

@@ -14,6 +14,16 @@ describe("processEmailContent — body extraction", () => {
     expect(processEmailContent(html)).toBe("<p>Hello</p>");
   });
 
+  it("keeps content a sender placed after </html>", () => {
+    // Sendy/GrapesJS shape: an empty document, then the whole newsletter.
+    const html =
+      '<html><head><title></title></head><body><meta charset="UTF-8"></body></html>' +
+      "<p>Hello</p><ol><li>Item</li></ol>";
+    const result = processEmailContent(html);
+    expect(result).toContain("<p>Hello</p>");
+    expect(result).toContain("<ol><li>Item</li></ol>");
+  });
+
   it("handles body tag with attributes", () => {
     const html = '<html><body style="margin:0"><p>Hi</p></body></html>';
     expect(processEmailContent(html)).toBe("<p>Hi</p>");

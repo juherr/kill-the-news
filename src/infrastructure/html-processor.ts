@@ -251,7 +251,11 @@ export function processEmailContent(
     if (cid) cidMap.set(cid, att);
   }
 
-  const { document } = parseHTML(content);
+  // Drop the closing </body> and </html> tags. Some senders (Sendy/GrapesJS) close
+  // an empty document and put the whole newsletter after </html>; HTML5 parsers
+  // move that trailing content back into <body>, linkedom does not. Without the
+  // closing tags linkedom nests it into <body> as well.
+  const { document } = parseHTML(content.replace(/<\/(?:body|html)\s*>/gi, ""));
 
   document
     .querySelectorAll("script, object, embed, iframe, frame, frameset")
