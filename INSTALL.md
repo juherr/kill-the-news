@@ -4,7 +4,7 @@ How to set up, run, deploy, and configure kill-the-news. For an overview of what
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 22+
 - A Cloudflare account (free plan works — Workers, KV, and Email Routing are all included)
 - A domain added to Cloudflare as a zone (DNS managed by Cloudflare)
 - A ForwardEmail account _(Option B only)_
@@ -29,7 +29,7 @@ If your domain is not yet on Cloudflare: in the [Cloudflare dashboard](https://d
    The script will prompt for an admin password and your domain, then:
    - install npm dependencies
    - verify Cloudflare auth (`wrangler whoami`)
-   - create KV namespaces (`EMAIL_STORAGE` + preview) in your account
+   - look up KV namespaces (`<worker>-EMAIL_STORAGE` and `<worker>-EMAIL_STORAGE_preview`) in your account and create any that are missing
    - set the `ADMIN_PASSWORD` secret in the `production` environment
    - generate `wrangler.toml` from `wrangler-example.toml` with your KV IDs, domain, and today's compatibility date
 

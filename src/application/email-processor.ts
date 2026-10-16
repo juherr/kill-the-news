@@ -173,7 +173,7 @@ async function storeEmail(
   feed: Feed,
   input: ProcessEmailInput,
   env: Env,
-  ctx?: ExecutionContext,
+  ctx?: Pick<ExecutionContext, "waitUntil">,
 ): Promise<boolean> {
   // ── Dedup check ──────────────────────────────────────────────────────────
   // Compute both dedup signals up-front (hash is async) so we only do it once.
@@ -295,7 +295,7 @@ async function storeEmail(
 export async function processEmail(
   input: ProcessEmailInput,
   env: Env,
-  ctx?: ExecutionContext,
+  ctx?: Pick<ExecutionContext, "waitUntil">,
 ): Promise<IngestResult> {
   const validation = await loadAcceptingFeed(input, env);
   if (!validation.ok) {

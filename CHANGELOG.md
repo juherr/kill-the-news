@@ -21,6 +21,19 @@ verbatim as the GitHub Release notes — so what you write here is what ships.
 
 ### Fixed
 
+- Update Hono, Wrangler, esbuild and Vitest to patched releases that address
+  dependency security advisories. Wrangler now requires Node.js 22 or later;
+  the dry-run build uses its renamed `--no-autoconfig` flag.
+- WebSub subscription requests now reject file uploads for `hub.secret` and
+  `hub.lease_seconds` rather than treating them as text fields.
+- Setup no longer fails to list KV namespaces because of an unsupported `--json`
+  flag or reports that failure as an authentication problem. Namespace parsing
+  now reads Wrangler's JSON correctly and matches explicit worker-prefixed
+  titles instead of falling back to unrelated namespaces. Wrangler errors remain
+  visible, and setup checks for existing namespaces before creating missing ones,
+  so reruns with both namespaces present do not require KV-create permission.
+  The listing runs in CI mode so Wrangler's agent-skills notice cannot corrupt
+  the JSON output.
 - Per-feed favicons now resolve for senders on a subdomain that hosts no icon of
   its own (e.g. `mail.example.com`): the lookup walks up to the apex domain
   (`example.com`) and uses its favicon, caching it under the original sender

@@ -80,11 +80,19 @@ hubRouter.post("/", async (c) => {
     return c.text("Not Found: feed does not exist", 404);
   }
 
-  const secret = form.get("hub.secret") || undefined; // "" → undefined
+  const secretField = form.get("hub.secret");
+  const leaseField = form.get("hub.lease_seconds");
+  if (
+    (secretField !== null && typeof secretField !== "string") ||
+    (leaseField !== null && typeof leaseField !== "string")
+  ) {
+    return c.text("Bad Request: unexpected field types", 400);
+  }
+  const secret = secretField || undefined; // "" → undefined
   if (secret && secret.length > 200) {
     return c.text("Bad Request: hub.secret must be under 200 bytes", 400);
   }
-  const rawLease = parseInt(form.get("hub.lease_seconds") ?? "", 10);
+  const rawLease = parseInt(leaseField ?? "", 10);
   const leaseSeconds = isNaN(rawLease)
     ? DEFAULT_LEASE_SECONDS
     : Math.min(Math.max(rawLease, 1), MAX_LEASE_SECONDS);

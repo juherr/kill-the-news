@@ -38,19 +38,23 @@ echo "✅ Cloudflare authentication verified"
 
 extract_namespace_ids_from_json() {
   local worker_name="$1"
-  node - "$worker_name" <<'NODE'
+  # Template literals below are expanded by JavaScript, not the shell.
+  # shellcheck disable=SC2016
+  node -e '
 const fs = require("node:fs");
-const workerName = process.argv[2];
+const workerName = process.argv[1];
 
 let namespaces;
 try {
   namespaces = JSON.parse(fs.readFileSync(0, "utf8"));
 } catch {
-  process.exit(0);
+  console.error("❌ Wrangler returned invalid namespace JSON.");
+  process.exit(1);
 }
 
 if (!Array.isArray(namespaces)) {
-  process.exit(0);
+  console.error("❌ Expected a JSON array of KV namespaces from Wrangler.");
+  process.exit(1);
 }
 
 const findByTitle = (title) => {
@@ -61,44 +65,57 @@ const findByTitle = (title) => {
 const mainId = findByTitle(`${workerName}-EMAIL_STORAGE`);
 const previewId = findByTitle(`${workerName}-EMAIL_STORAGE_preview`);
 process.stdout.write(`${mainId}\n${previewId}`);
-NODE
+' "$worker_name"
 }
 
 get_kv_namespace_ids() {
   echo "🔍 Retrieving KV namespace IDs..."
 
   local output
-  if ! output="$(npx wrangler kv namespace list --json 2>/dev/null)"; then
-    echo "❌ Error listing KV namespaces. Please check your Cloudflare authentication."
+  # Suppress Wrangler's skills notice so stdout contains only namespace JSON.
+  if ! output="$(CI=true npx wrangler kv namespace list)"; then
+    echo "❌ Error listing KV namespaces. See the Wrangler error above."
     return 1
   fi
 
   local ids
-  ids="$(printf '%s' "$output" | extract_namespace_ids_from_json "$WORKER_NAME")"
-  MAIN_ID="$(printf '%s\n' "$ids" | sed -n '1p')"
-  PREVIEW_ID="$(printf '%s\n' "$ids" | sed -n '2p')"
-
-  if [ -z "$MAIN_ID" ] || [ -z "$PREVIEW_ID" ]; then
-    MAIN_ID="$(echo "$output" | grep -o '"id": *"[^"]*"' | head -1 | cut -d'"' -f4)"
-    PREVIEW_ID="$(echo "$output" | grep -o '"id": *"[^"]*"' | head -2 | tail -1 | cut -d'"' -f4)"
-  fi
-
-  if [ -z "$MAIN_ID" ] || [ -z "$PREVIEW_ID" ]; then
-    echo "❌ Failed to extract KV namespace IDs. Please run manually:"
-    echo "npx wrangler kv namespace list"
-    echo "And update the IDs in wrangler.toml"
+  if ! ids="$(printf '%s' "$output" | extract_namespace_ids_from_json "$WORKER_NAME")"; then
     return 1
   fi
+  MAIN_ID="$(printf '%s\n' "$ids" | sed -n '1p')"
+  PREVIEW_ID="$(printf '%s\n' "$ids" | sed -n '2p')"
 
   return 0
 }
 
-echo "🗄️ Creating KV namespaces..."
-npx wrangler kv namespace create EMAIL_STORAGE >/dev/null 2>&1 || true
-npx wrangler kv namespace create EMAIL_STORAGE --preview >/dev/null 2>&1 || true
+create_kv_namespace() {
+  local output
+  if ! output="$(npx wrangler kv namespace create "$@" 2>&1)"; then
+    # Re-running setup should reuse namespaces that already exist.
+    if ! printf '%s' "$output" | grep -qi "already exists"; then
+      printf '❌ Failed to create KV namespace:\n%s\n' "$output" >&2
+      return 1
+    fi
+  fi
+}
 
-if ! get_kv_namespace_ids; then
-  echo "❌ Setup cannot continue without KV namespace IDs."
+get_kv_namespace_ids
+
+if [ -z "$MAIN_ID" ] || [ -z "$PREVIEW_ID" ]; then
+  echo "🗄️ Creating missing KV namespaces..."
+  if [ -z "$MAIN_ID" ]; then
+    create_kv_namespace "${WORKER_NAME}-EMAIL_STORAGE"
+  fi
+  if [ -z "$PREVIEW_ID" ]; then
+    create_kv_namespace "${WORKER_NAME}-EMAIL_STORAGE" --preview
+  fi
+  get_kv_namespace_ids
+fi
+
+if [ -z "$MAIN_ID" ] || [ -z "$PREVIEW_ID" ]; then
+  echo "❌ Failed to extract KV namespace IDs. Please run manually:"
+  echo "npx wrangler kv namespace list"
+  echo "And update the IDs in wrangler.toml"
   exit 1
 fi
 

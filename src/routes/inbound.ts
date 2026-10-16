@@ -16,7 +16,7 @@ export async function handle(c: Context<{ Bindings: Env }>): Promise<Response> {
       contentType: payload.html ? "HTML" : "Text",
     });
 
-    let ctx: ExecutionContext | undefined;
+    let ctx: Pick<ExecutionContext, "waitUntil"> | undefined;
     try {
       ctx = c.executionCtx;
     } catch {

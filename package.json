@@ -5,7 +5,7 @@
   "main": "dist/worker.js",
   "scripts": {
     "build:client": "node scripts/build-client.mjs",
-    "build": "wrangler deploy --config wrangler.build.toml --dry-run --outdir=dist --no-experimental-autoconfig",
+    "build": "wrangler deploy --config wrangler.build.toml --dry-run --outdir=dist --no-autoconfig",
     "prebuild": "npm run build:client",
     "format": "prettier --write '**/*.{js,ts,css,json,md}'",
     "format:check": "prettier --check '**/*.{js,ts,css,json,md}'",
@@ -33,12 +33,12 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260522.1",
+    "@cloudflare/workers-types": "5.20261016.1",
     "@types/escape-html": "^1.0.4",
     "@types/mailparser": "^3.4.6",
     "@types/rss": "^0.0.32",
-    "@vitest/coverage-v8": "4.1.7",
-    "esbuild": "^0.28.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "esbuild": "^0.28.2",
     "eslint": "^10.0.0",
     "eslint-config-prettier": "^10.1.8",
     "happy-dom": "20.9.0",
@@ -48,8 +48,8 @@
     "prettier": "3.8.3",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.59.4",
-    "vitest": "4.1.7",
-    "wrangler": "4.94.0"
+    "vitest": "4.1.11",
+    "wrangler": "4.151.0"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.4.0",
@@ -57,7 +57,7 @@
     "@scalar/hono-api-reference": "^0.10.19",
     "escape-html": "^1.0.3",
     "feed": "5.2.1",
-    "hono": "4.12.22",
+    "hono": "4.13.13",
     "linkedom": "^0.18.12",
     "postal-mime": "^2.7.4",
     "zod": "4.4.3"

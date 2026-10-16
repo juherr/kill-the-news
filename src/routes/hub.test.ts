@@ -139,6 +139,32 @@ describe("POST /hub — input validation", () => {
     expect(res.status).toBe(400);
   });
 
+  it.each(["hub.secret", "hub.lease_seconds"])(
+    "returns 400 when %s is a file rather than text",
+    async (field) => {
+      const app = makeApp();
+      const env = createMockEnv();
+      await env.EMAIL_STORAGE.put(
+        "feed:feed1:config",
+        JSON.stringify({ title: "Feed 1" }),
+      );
+      const form = new FormData();
+      form.set("hub.mode", "subscribe");
+      form.set("hub.topic", `https://${env.DOMAIN}/rss/feed1`);
+      form.set("hub.callback", "https://cb.example/sub");
+      form.set(field, new Blob(["not text"]), "value.txt");
+
+      const res = await app.request(
+        "/hub",
+        { method: "POST", body: form },
+        env,
+      );
+
+      expect(res.status).toBe(400);
+      expect(await res.text()).toContain("unexpected field types");
+    },
+  );
+
   it("returns 400 when hub.secret exceeds 200 bytes", async () => {
     const app = makeApp();
     const env = createMockEnv();
